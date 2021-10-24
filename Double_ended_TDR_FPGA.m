@@ -1,44 +1,44 @@
-%%  Ë«¶ËÍ¬²½Ä£ĞÍÍ¨ĞÅ
-%   »ùÓÚTime Delay Reservoir Computing
+%%  åŒç«¯åŒæ­¥æ¨¡å‹é€šä¿¡
+%   åŸºäºTime Delay Reservoir Computing
 %   By Zhuo Liu 2021.10.23 Nanjing
-%% %µ¼ÈëÊı¾İ¼¯
+%% %å¯¼å…¥æ•°æ®é›†
 clear;clc;
 load ('L_ode_28.mat'); 
 L_x=X(:,1)'/max(X(:,1))/2.5+0.6; 
 L_z=X(:,3)'/max(X(:,3))/1.2+0.05;                                  
 
 P_L=270000;
-%% %ÑµÁ·Àà²ÎÊı 
-%×´Ì¬¸üĞÂ²ÎÊı
+%% %è®­ç»ƒç±»å‚æ•° 
+%çŠ¶æ€æ›´æ–°å‚æ•°
 
 p = 4;          
 r = 2;%
 n = 2.8;
 h = 0.03;
 
-NUM_of_Virtualnodes = 24;   %ĞéÄâÉñ¾­½ÚµãÊı(N)
+NUM_of_Virtualnodes = 24;   %è™šæ‹Ÿç¥ç»èŠ‚ç‚¹æ•°(N)
 N_RC=4;
-NUM_of_Training = 12000;     %ÑµÁ·µãÊı
-Discard_steps = 100;        %Ç°ºöÂÔµãÊı
-NUM_of_Testing = 270000;       %²âÊÔµãÊı
-Length_of_data = Discard_steps+NUM_of_Testing+NUM_of_Training; %×ÜÊı¾İ³¤¶È
+NUM_of_Training = 6000;     %è®­ç»ƒç‚¹æ•°
+Discard_steps = 100;        %å‰å¿½ç•¥ç‚¹æ•°
+NUM_of_Testing = 270000;       %æµ‹è¯•ç‚¹æ•°
+Length_of_data = Discard_steps+NUM_of_Testing+NUM_of_Training; %æ€»æ•°æ®é•¿åº¦
 
-%³õÊ¼»¯
+%åˆå§‹åŒ–
 X_N = zeros(NUM_of_Testing,NUM_of_Virtualnodes*N_RC);
-M=-1+(1-(-1)).*rand(1,NUM_of_Virtualnodes); %Éú³ÉËæ»úÑÚÂë
-tintial = M;    %³õÊ¼Öµ
+M=-1+(1-(-1)).*rand(1,NUM_of_Virtualnodes); %ç”Ÿæˆéšæœºæ©ç 
+tintial = M;    %åˆå§‹å€¼
 
 for ti=1:1:N_RC
     if ti==1
-        Data_train = L_z(1:Discard_steps+NUM_of_Training) ;    %µ¼ÈëÑµÁ·Êı¾İ
+        Data_train = L_z(1:Discard_steps+NUM_of_Training) ;    %å¯¼å…¥è®­ç»ƒæ•°æ®
         Data_input = L_x(1:Discard_steps+NUM_of_Training);
-        J_Input = Data_input'*M;    %ÊäÈë*ÑÚÂë
+        J_Input = Data_input'*M;    %è¾“å…¥*æ©ç 
     else
         Data_input = Y_testing1;
-        J_Input = Data_input'*M;    %ÊäÈë*ÑÚÂë
+        J_Input = Data_input'*M;    %è¾“å…¥*æ©ç 
     end
     X_hat=RC_t(tintial,J_Input,Discard_steps+NUM_of_Training,NUM_of_Virtualnodes,n,r,p,h) ;
-    %% µ¥Î»¾ØÕó
+    %% å•ä½çŸ©é˜µ
     II=zeros(NUM_of_Virtualnodes,NUM_of_Virtualnodes);
     for i=1:NUM_of_Virtualnodes
         for j=1:NUM_of_Virtualnodes
@@ -48,7 +48,7 @@ for ti=1:1:N_RC
         end
     end
     W(ti,:)=Data_train(1,Discard_steps+1:Discard_steps+NUM_of_Training)*X_hat(Discard_steps+1:Discard_steps+NUM_of_Training,:)*(X_hat(Discard_steps+1:Discard_steps+NUM_of_Training,:)'*X_hat(Discard_steps+1:Discard_steps+NUM_of_Training,:)+II)^(-1);
-    %% Ê¹ÓÃÔ­Ê¼Êı¾İ¼¯´øÈëWÇóµÃY
+    %% ä½¿ç”¨åŸå§‹æ•°æ®é›†å¸¦å…¥Wæ±‚å¾—Y
     Y_testing1=W(ti,:)*X_hat';
     X_N(1:Discard_steps+NUM_of_Training,NUM_of_Virtualnodes*(ti-1)+1:NUM_of_Virtualnodes*ti)=X_hat;
 end
@@ -60,10 +60,10 @@ W_N=Data_train(1,Discard_steps+1:Discard_steps+NUM_of_Training)*X_N(Discard_step
 for ti=1:1:N_RC
     if ti==1
         Data_input = L_x(Length_of_data-P_L+1:Length_of_data);
-        J_Input = Data_input'*M;    %ÊäÈë*ÑÚÂë
+        J_Input = Data_input'*M;    %è¾“å…¥*æ©ç 
     else
         Data_input = Y_testing1;
-        J_Input = Data_input'*M;    %ÊäÈë*ÑÚÂë
+        J_Input = Data_input'*M;    %è¾“å…¥*æ©ç 
     end
     X_hat=RC_t(X_N(Discard_steps+NUM_of_Training,NUM_of_Virtualnodes*(ti-1)+1:NUM_of_Virtualnodes*ti),J_Input,NUM_of_Testing,NUM_of_Virtualnodes,n,r,p,h) ;
     Y_testing1=W(ti,:)*X_hat';
@@ -83,30 +83,30 @@ ylabel('G_1(t)','fontsize',12);ylim([0.1,1]);%xlabel('x(t)','fontsize',12);
 title('(b)','fontsize',12)
 P_L=270000;
 
-%×´Ì¬¸üĞÂ²ÎÊı
+%çŠ¶æ€æ›´æ–°å‚æ•°
 T=1;
 p = 4;          
 r = 2;
 n = 2.8;
 h = 0.03;
 
-NUM_of_Virtualnodes = 12;   %ĞéÄâÉñ¾­½ÚµãÊı(N)
+NUM_of_Virtualnodes = 12;   %è™šæ‹Ÿç¥ç»èŠ‚ç‚¹æ•°(N)
 N_RC=6;
-Length_of_data = Discard_steps+NUM_of_Testing+NUM_of_Training; %×ÜÊı¾İ³¤¶È
+Length_of_data = Discard_steps+NUM_of_Testing+NUM_of_Training; %æ€»æ•°æ®é•¿åº¦
 OutputNodes=1;
 Range_Train=Discard_steps+1:Discard_steps+NUM_of_Training;
-%³õÊ¼»¯
+%åˆå§‹åŒ–
 X_N = zeros(NUM_of_Testing,NUM_of_Virtualnodes*N_RC);
-M=-1+(1-(-1)).*rand(1,NUM_of_Virtualnodes); %Éú³ÉËæ»úÑÚÂë
+M=-1+(1-(-1)).*rand(1,NUM_of_Virtualnodes); %ç”Ÿæˆéšæœºæ©ç 
 
-tintial = M;    %³õÊ¼Öµ
+tintial = M;    %åˆå§‹å€¼
 Data_Test=L_z(Length_of_data-NUM_of_Testing+1:Length_of_data);
 flag=1;
 
 
 for ti=1:1:N_RC
     if ti==1
-        Data_train = L_z(1:Discard_steps+NUM_of_Training) ;    %µ¼ÈëÑµÁ·Êı¾İ
+        Data_train = L_z(1:Discard_steps+NUM_of_Training) ;    %å¯¼å…¥è®­ç»ƒæ•°æ®
         Data_input = L_x(1:Discard_steps+NUM_of_Training);
         J_Input = Data_input'*M;   
     else
@@ -114,7 +114,7 @@ for ti=1:1:N_RC
         J_Input = Data_input'*M; 
     end
     X_hat=RC_t(tintial,J_Input,Discard_steps+NUM_of_Training,NUM_of_Virtualnodes,n,r,p,h) ;
-    %% µ¥Î»¾ØÕó
+    %% å•ä½çŸ©é˜µ
     II=zeros(NUM_of_Virtualnodes,NUM_of_Virtualnodes);
     for i=1:NUM_of_Virtualnodes
         for j=1:NUM_of_Virtualnodes
@@ -124,7 +124,7 @@ for ti=1:1:N_RC
         end
     end
     W2(ti,:)=Data_train(1,Discard_steps+1:Discard_steps+NUM_of_Training)*X_hat(Discard_steps+1:Discard_steps+NUM_of_Training,:)*(X_hat(Discard_steps+1:Discard_steps+NUM_of_Training,:)'*X_hat(Discard_steps+1:Discard_steps+NUM_of_Training,:)+II)^(-1);
-    %% Ê¹ÓÃÔ­Ê¼Êı¾İ¼¯´øÈëWÇóµÃY
+    %% ä½¿ç”¨åŸå§‹æ•°æ®é›†å¸¦å…¥Wæ±‚å¾—Y
     Y_testing2=W2(ti,:)*X_hat';
     X_N(1:Discard_steps+NUM_of_Training,NUM_of_Virtualnodes*(ti-1)+1:NUM_of_Virtualnodes*ti)=X_hat;
 end
